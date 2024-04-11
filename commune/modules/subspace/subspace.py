@@ -6,10 +6,11 @@ import os
 import commune as c
 import requests 
 from substrateinterface import SubstrateInterface
+import time
 
 U32_MAX = 2**32 - 1
 U16_MAX = 2**16 - 1
-
+start_time0 = time.time()
 class Subspace(c.Module):
     """
     Handles interactions with the subspace chain.
@@ -135,7 +136,8 @@ class Subspace(c.Module):
         while trials > 0:
             try:
                 url = self.resolve_url(url, mode=mode, network=network)
-
+                import time
+                sub_interface_start = time.time()
                 substrate= SubstrateInterface(url=url, 
                             websocket=websocket, 
                             ss58_format=ss58_format, 
@@ -146,6 +148,10 @@ class Subspace(c.Module):
                             ws_options=ws_options, 
                             auto_discover=auto_discover, 
                             auto_reconnect=auto_reconnect)
+                print("substrate interface is ===>", substrate)
+                sub_interface_end = time.time()
+                sub_inter_total = sub_interface_end - sub_interface_start
+                print("sub_total interface is ", sub_inter_total)
                 break
             except Exception as e:
                 trials = trials - 1
@@ -290,7 +296,7 @@ class Subspace(c.Module):
     def min_burn(self,  network='main', block=None, update=False, fmt='j'):
         min_burn = self.query('MinBurn', block=block, update=update, network=network)
         return self.format_amount(min_burn, fmt=fmt)
-    
+    start_time = time.time()
     def query(self, name:str,  
               params = None, 
               module:str='SubspaceModule',
@@ -307,7 +313,7 @@ class Subspace(c.Module):
 
         network = self.resolve_network(network)
         path = f'query/{network}/{module}.{name}'
-    
+        
         params = params or []
         if not isinstance(params, list):
             params = [params]
@@ -322,7 +328,12 @@ class Subspace(c.Module):
             value = self.get(path, None)
             if value != None:
                 return value
+        substrate_start_time = time.time()
         substrate = self.get_substrate(network=network, mode=mode)
+        print("substrate is ====>", substrate)
+        substrate_end_time = time.time()
+        substrate_total_time = substrate_end_time - substrate_start_time
+        print("substrate_total is  ===", substrate_total_time)
         response =  substrate.query(
             module=module,
             storage_function = name,
@@ -330,12 +341,15 @@ class Subspace(c.Module):
             params = params
         )
         value =  response.value
-
         # if the value is a tuple then we want to convert it to a list
         if save:
             self.put(path, value)
 
         return value
+
+    end_time = time.time()
+    elps_time = end_time - start_time
+    print("elps_time is seconds", elps_time)
 
     def query_constant( self, 
                         constant_name: str, 
@@ -3779,6 +3793,9 @@ class Subspace(c.Module):
         import streamlit as st
         return st.write(self.get_module())
     
+end_time0 = time.time()
+total_time = end_time0 - start_time0
+print("total time is ====>", total_time)
 
 
     

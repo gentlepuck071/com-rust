@@ -1,96 +1,139 @@
 import commune as c
 import streamlit as st
 from typing import *
-import json
-import paramiko
+from typing import Any, Union
+from paramiko.client import SSHClient, AutoAddPolicy
+from rich.console import Console
+import os
 
 class Remote(c.Module):
     filetype = 'yaml'
-    host_data_path = f'{c.datapath}/hosts.{filetype}'
+    root_path  = root  = os.path.dirname(os.path.dirname(__file__))
+    libpath = lib_path = os.path.dirname(root_path)
+    datapath = os.path.join(libpath, 'data')
+    host_data_path = f'{datapath}/hosts.{filetype}'
     host_url = 'https://raw.githubusercontent.com/communeai/commune/main/hosts.yaml'
     executable_path='commune/bin/c'
+      
     @classmethod
     def ssh_cmd(cls, *cmd_args, 
-                host:str= None,  
-                cwd:str=None, 
-                verbose=False, 
-                sudo=False, 
-                key=None, 
-                timeout=10,  
-                **kwargs ):
-        """s
-        Run a command on a remote server using Remote.
+                    host:str= None,  
+                    cwd:str= None, 
+                    verbose=False, 
+                    sudo=False, 
+                    key=None, 
+                    timeout=10,  
+                    **kwargs ):
+            self = cls()            
+            command = ' '.join(cmd_args).strip()
+            if command.startswith('c '):
+                command = command.replace('c ', cls.executable_path + ' ')
 
-        :param host: Hostname or IP address of the remote machine.
-        :param port: Remote port (typically 22).
-        :param username: Remote username.
-        :param password: Remote password.
-        :param command: Command to be executed on the remote machine.
-        :return: Command output.
-        """
-        command = ' '.join(cmd_args).strip()
-        
-        if command.startswith('c '):
-            command = command.replace('c ', cls.executable_path + ' ')
+            if cwd != None:
+                command = f'cd {cwd} && {command}'
 
-        if cwd != None:
-            command = f'cd {cwd} && {command}'
-
-        
-        hosts = cls.hosts()
-        host_name = host
-        if host_name == None:
-            host = c.choice(list(hosts.keys()))
+            hosts = cls.hosts()
             host_name = host
-        if host_name not in hosts:
-            raise Exception(f'Host {host_name} not found')
-        host = hosts[host_name]
+            if host_name == None:
+                host = cls.c_choice(list(hosts))
+                host_name = host
+            if host_name not in hosts:
+                raise Exception(f'Host {host_name} not found')
+            host = hosts[host_name]
+            client = SSHClient()
 
-        # Create an Remote client instance.
-        client = paramiko.SSHClient()
+            client.set_missing_host_key_policy(AutoAddPolicy())
+                    
+            client.connect(host['host'],
+                        port=host['port'], 
+                        username=host['user'], 
+                        password=host['pwd'])
+            
+            if sudo and host['user'] != "root":
+                command = "sudo -S -p '' %s" % command
+            stdin, stdout, stderr = client.exec_command(command)
+            
 
-        # Automatically add the server's host key (this is insecure and used for demonstration; 
-        # in production, you should have the remote server's public key in known_hosts)
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            try:
+                if sudo:
+                    stdin.write(host['pwd'] + "\n")
+                    stdin.flush()
+                color = self.c_random_color()
+                outputs = {'error': '', 'output': ''}
+
+                for line in stdout.readlines():
+                    if verbose:
+                        self.c_print(f'[bold]{host_name}[/bold]', line.strip('\n'), color=color)
+                    outputs['output'] += line
+
+                for line in stderr.readlines():
+                    if verbose:
+                        self.c_print(f'[bold]{host_name}[/bold]', line.strip('\n'))
+                    outputs['error'] += line
+            
+                if len(outputs['error']) == 0:
+                    outputs = outputs['output']
+        
+            
                 
-        # Connect to the remote server
-        client.connect(host['host'],
-                       port=host['port'], 
-                       username=host['user'], 
-                       password=host['pwd'])
-        
-        if sudo and host['user'] != "root":
-            command = "sudo -S -p '' %s" % command
-        stdin, stdout, stderr = client.exec_command(command)
+            except Exception as e:
+                self.c_print(e)
+            return outputs
 
-        try:
-            if sudo:
-                stdin.write(host['pwd'] + "\n")
-                stdin.flush()
-            color = c.random_color()
-            # Print the output of ls command
-            outputs = {'error': '', 'output': ''}
+    @classmethod
+    def c_choice(cls, options:Union[list, dict])->list:
+            self = cls()
+            import random
+            options = self.c_copy(options) 
+            if len(options) == 0:
+                return None
+            if isinstance(options, dict):
+                options = list(options.values())
 
-            for line in stdout.readlines():
-                if verbose:
-                    c.print(f'[bold]{host_name}[/bold]', line.strip('\n'), color=color)
-                outputs['output'] += line
-
-            for line in stderr.readlines():
-                if verbose:
-                    c.print(f'[bold]{host_name}[/bold]', line.strip('\n'))
-                outputs['error'] += line
-        
-            if len(outputs['error']) == 0:
-                outputs = outputs['output']
+            assert isinstance(options, list),'options must be a list'
+            return random.choice(options)
+    @classmethod           
+    def c_copy(cls, data: Any) -> Any:
+            import copy
+            return copy.deepcopy(data)
     
-            # stdin.close()
-            # stdout.close()
-            # stderr.close()
-            # client.close()
-        except Exception as e:
-            c.print(e)
-        return outputs
+    @classmethod
+    def c_random_color(cls):
+            import random
+            return random.choice(cls.c_colors())
+    
+    @classmethod
+    def c_colors(cls):
+        return ['black', 'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'bright_black', 'bright_red', 'bright_green', 'bright_yellow', 'bright_blue', 'bright_magenta', 'bright_cyan', 'bright_white']
+    @classmethod
+    def c_print(cls, *text:str, 
+                color:str=None, 
+                verbose:bool = True,
+                console: Console = None,
+                flush:bool = False,
+                **kwargs):
+            if verbose:
+                if color == 'random':
+                    color = cls.c_random_color()
+                if color:
+                    kwargs['style'] = color
+                console = cls.resolve_console(console, **kwargs)
+
+
+                try:
+                    if flush:
+                        console.print(**kwargs, end='\r')
+                    console.print(*text, **kwargs,)
+                except Exception as e:
+                    print(e,)
+    @classmethod
+    def c_resolve_console(cls, console = None, **kwargs):
+            if not hasattr(cls,'console'):
+                cls.console = Console(**kwargs)
+            if console is not None:
+                cls.console = console
+            return cls.console
+
 
     @classmethod
     def add_host(cls, 
@@ -356,7 +399,6 @@ class Remote(c.Module):
         if not update:
             namespace = c.get_namespace(network=network)
             return namespace
-        
         peer2namespace = cls.peer2namespace()
         for peer, peer_namespace in peer2namespace.items():
 
@@ -670,7 +712,7 @@ class Remote(c.Module):
                                 )
             paths += [path]
             futures += [future]
-
+        print("future is, ===>", futures, )
         results = c.wait(futures, timeout=timeout, generator=False)
         for i, result in enumerate(results):
             path = paths[i]
@@ -880,5 +922,6 @@ class Remote(c.Module):
         if host not in hosts:
             return {k:v['pwd'] for k,v in hosts.items()}
         return self.hosts()[host]['pwd']
+    
 
 Remote.run(__name__)

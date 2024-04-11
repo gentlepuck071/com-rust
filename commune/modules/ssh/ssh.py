@@ -31,7 +31,7 @@ class SSH(c.Module):
 
         # Create an SSH client instance.
         client = paramiko.SSHClient()
-
+        print("client is what", )
         # Automatically add the server's host key (this is insecure and used for demonstration; 
         # in production, you should have the remote server's public key in known_hosts)
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

@@ -18,4 +18,3 @@ class Test(c.Module):
         stats = s.stats()
         assert len(stats) == n
 
-

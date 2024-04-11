@@ -85,7 +85,6 @@ class c:
         Set the config as well as its local params
         '''
         kwargs = kwargs if kwargs != None else {}
-
         # in case they passed in a locals() dict, we want to resolve the kwargs and avoid ambiguous args
         kwargs = c.locals2kwargs(kwargs)
 
@@ -106,7 +105,7 @@ class c:
         
         if save_config:
             self.save_config(config=config)
-    
+
         return self.config
 
 
@@ -585,7 +584,6 @@ class c:
             key: 'Key' = None,
             password : str = None,
             **kwargs) -> Any:
-        
         '''
         Puts a value in sthe config, with the option to encrypt it
 
@@ -597,7 +595,6 @@ class c:
 
         data = getattr(cls, f'get_{mode}')(k,default=default, **kwargs)
             
-
         if password != None:
             data['data'] = c.decrypt(data['data'], password=password)
 
@@ -4530,7 +4527,6 @@ class c:
               console: Console = None,
               flush:bool = False,
               **kwargs):
-              
         if verbose:
             if color == 'random':
                 color = cls.random_color()
@@ -4542,9 +4538,9 @@ class c:
             try:
                 if flush:
                     console.print(**kwargs, end='\r')
-                console.print(*text, **kwargs)
+                console.print(*text, **kwargs,)
             except Exception as e:
-                print(e)
+                print(e,)
     @classmethod
     def success(cls, *args, **kwargs):
         logger = cls.resolve_logger()
@@ -5629,7 +5625,7 @@ class c:
 
     @classmethod
     def sync(cls, *args, **kwargs):
-            
+        print("sync:args, kwargs", *args, **kwargs)
         return c.module('subspace')().sync(*args, **kwargs)
         
 

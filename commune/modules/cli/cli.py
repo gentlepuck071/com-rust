@@ -1,7 +1,9 @@
 
 import commune as c
 from munch import Munch
+import time
 
+cli_start_time = time.time()
 class CLI(c.Module):
     """
     Create and init the CLI class, which handles the coldkey, hotkey and tao transfer 
@@ -19,7 +21,7 @@ class CLI(c.Module):
         self.module = c.Module()
         input = self.argv()
         args, kwargs = self.parse_args(input)
-        
+        print("args and kwargs =====>", args, kwargs)
         module_list = c.modules()
         if new_event_loop:
             c.new_event_loop(True)
@@ -32,7 +34,7 @@ class CLI(c.Module):
             module_list = c.modules()
             # handle module/function
             is_fn = args[0] in functions
-
+ 
             if '/' in args[0]:
                 args = args[0].split('/') + args[1:]
                 is_fn = False
@@ -66,7 +68,6 @@ class CLI(c.Module):
                 fn_name = fn
                 fn = getattr(module, fn_name)
                 
-
                 # if c.is_property(fn):
                 #     output = getattr(module(), fn.__name__)
                 
@@ -78,19 +79,16 @@ class CLI(c.Module):
                     output =  getattr(module(), fn_name)
                 else: 
                     output = fn    
-                
             else:
                 fn = module
             if callable(fn):
                 output = fn(*args, **kwargs)
-            
                 
         else:
             raise Exception ('No module, function or server found for {args[0]}')
 
         if save:
             self.save_history(input, output)
- 
         if c.is_generator(output):
             for i in output:
                 if isinstance(c, Munch):
@@ -100,7 +98,7 @@ class CLI(c.Module):
             if isinstance(output, Munch):
                 output = output.toDict()
             c.print(output)
-
+    
     def save_history(self, input, output):
         try:
             self.put(f'cli_history/{int(c.time())}', {'input': input, 'output': output})
@@ -121,4 +119,6 @@ class CLI(c.Module):
         return cls.rm('cli_history')
 
 
-        
+cli_end_time = time.time()
+cli_total_time = cli_end_time - cli_start_time
+print("cli_total_time is ==>", cli_total_time)        
