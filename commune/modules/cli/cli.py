@@ -1,9 +1,7 @@
 
 import commune as c
 from munch import Munch
-import time
 
-cli_start_time = time.time()
 class CLI(c.Module):
     """
     Create and init the CLI class, which handles the coldkey, hotkey and tao transfer 
@@ -16,12 +14,10 @@ class CLI(c.Module):
             new_event_loop: bool = True,
             save: bool = True
 
-
         ) :
         self.module = c.Module()
         input = self.argv()
         args, kwargs = self.parse_args(input)
-        print("args and kwargs =====>", args, kwargs)
         module_list = c.modules()
         if new_event_loop:
             c.new_event_loop(True)
@@ -119,6 +115,4 @@ class CLI(c.Module):
         return cls.rm('cli_history')
 
 
-cli_end_time = time.time()
-cli_total_time = cli_end_time - cli_start_time
-print("cli_total_time is ==>", cli_total_time)        
+    

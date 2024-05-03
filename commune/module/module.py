@@ -5278,6 +5278,7 @@ class c:
                 return cls.executor_cache[mode]
         executor =  c.module(f'executor').executor(max_workers=max_workers, mode=mode,  **kwargs)
         cls.executor_cache[mode] = executor
+        print("executor in executor is ---------->", cls.executor_cash[mode])
         return executor
     @classmethod
     def submit(cls, 
@@ -5299,7 +5300,6 @@ class c:
         
         fn = c.get_fn(fn)
         executor = c.executor(max_workers=max_workers, mode=mode) if executor == None else executor
-        
         args = c.copy(args)
         kwargs = c.copy(kwargs)
         init_kwargs = c.copy(init_kwargs)

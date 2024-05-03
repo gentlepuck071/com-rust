@@ -6,11 +6,9 @@ import os
 import commune as c
 import requests 
 from substrateinterface import SubstrateInterface
-import time
 
 U32_MAX = 2**32 - 1
 U16_MAX = 2**16 - 1
-start_time0 = time.time()
 class Subspace(c.Module):
     """
     Handles interactions with the subspace chain.
@@ -296,7 +294,6 @@ class Subspace(c.Module):
     def min_burn(self,  network='main', block=None, update=False, fmt='j'):
         min_burn = self.query('MinBurn', block=block, update=update, network=network)
         return self.format_amount(min_burn, fmt=fmt)
-    start_time = time.time()
     def query(self, name:str,  
               params = None, 
               module:str='SubspaceModule',
@@ -328,12 +325,8 @@ class Subspace(c.Module):
             value = self.get(path, None)
             if value != None:
                 return value
-        substrate_start_time = time.time()
         substrate = self.get_substrate(network=network, mode=mode)
         print("substrate is ====>", substrate)
-        substrate_end_time = time.time()
-        substrate_total_time = substrate_end_time - substrate_start_time
-        print("substrate_total is  ===", substrate_total_time)
         response =  substrate.query(
             module=module,
             storage_function = name,
@@ -347,9 +340,6 @@ class Subspace(c.Module):
 
         return value
 
-    end_time = time.time()
-    elps_time = end_time - start_time
-    print("elps_time is seconds", elps_time)
 
     def query_constant( self, 
                         constant_name: str, 
@@ -1443,7 +1433,6 @@ class Subspace(c.Module):
     @staticmethod
     def vec82str(l:list):
         return ''.join([chr(x) for x in l]).strip()
-
     def get_modules(self, keys:list = None,
                      network='main',
                           timeout=20,
@@ -3793,9 +3782,7 @@ class Subspace(c.Module):
         import streamlit as st
         return st.write(self.get_module())
     
-end_time0 = time.time()
-total_time = end_time0 - start_time0
-print("total time is ====>", total_time)
+
 
 
     

@@ -43,7 +43,7 @@ class Task(c.Module):
         self.status = 'pending' # pending, running, done
         self.__dict__.update(extra_kwargs)
         # save the task state
-
+    
 
     @property
     def lifetime(self) -> float:

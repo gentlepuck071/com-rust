@@ -19,7 +19,6 @@ class CustomStreamReader(StreamReader):
 
 
 class Client(c.Module):
-
     def __init__( 
             self,
             ip: str ='0.0.0.0',
@@ -43,7 +42,6 @@ class Client(c.Module):
         self.save_history = save_history
         self.history_path = history_path
         self.debug = debug
-
         
 
     
@@ -60,13 +58,12 @@ class Client(c.Module):
         if verbose:
             c.print(f"Connecting to {self.ip}:{self.port}", color='green')
         self.address = f"{self.ip}:{self.port}"
-       
+        print("self_adderess------>", self.address)
 
     def resolve_client(self, ip: str = None, port: int = None) -> None:
         if ip != None or port != None:
             self.set_client(ip =ip,port = port)
     
-
 
     async def async_forward(self,
         fn: str,
@@ -94,6 +91,7 @@ class Client(c.Module):
 
         
         
+        print("url is in asynce", url)    
         # start a client session and send the request
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=request, headers=headers) as response:
@@ -102,7 +100,7 @@ class Client(c.Module):
                     BYTES_PER_MB = 1e6
                     if self.debug:
                         progress_bar = c.tqdm(desc='MB per Second', position=0)
-
+                    
                     result = {}
                     
                     async for line in response.content:

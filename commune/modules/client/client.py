@@ -36,7 +36,6 @@ class Client(c.module('client.http')):
         self.save_history = save_history
         self.history_path = history_path
         self.debug = debug
-
         
 
     
